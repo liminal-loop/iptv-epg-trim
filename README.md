@@ -48,6 +48,31 @@ Install uv: https://github.com/astral-sh/uv
 uv sync
 ```
 
+## Repository Policy
+
+This repository is restricted to the GitHub user liminal-loop.
+
+Enforcement layers:
+
+- GitHub workflow guard in [.github/workflows/owner-guard.yml](.github/workflows/owner-guard.yml)
+- Local commit hook in [.githooks/pre-commit](.githooks/pre-commit)
+
+Project-specific local git config:
+
+```bash
+git config --global --replace-all 'includeIf."gitdir/i:C:/Users/khg1imb/SourceCode/__home__/iptv-epg-trim/".path' 'C:/Users/khg1imb/SourceCode/__home__/iptv-epg-trim/.gitconfig.project'
+```
+
+Tracked project config file:
+
+- [.gitconfig.project](.gitconfig.project)
+
+The file contains repository-specific values for:
+
+- `user.name = liminal-loop`
+- `user.email = dev@bytemania.eu`
+- `core.hooksPath = .githooks`
+
 ## Run
 
 ```bash

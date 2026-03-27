@@ -1,0 +1,41 @@
+name: Owner Guard
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enforce-owner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify repository owner
+        run: |
+          if [ "${{ github.repository_owner }}" != "liminal-loop" ]; then
+            echo "This repository is restricted to owner liminal-loop."
+            echo "Current owner: ${{ github.repository_owner }}"
+            exit 1
+          fi
+
+      - name: Verify triggering actor
+        run: |
+          if [ "${{ github.actor }}" != "liminal-loop" ]; then
+            echo "Only liminal-loop is allowed to trigger repository workflows."
+            echo "Current actor: ${{ github.actor }}"
+            exit 1
+          fi
+
+      - name: Verify commit author emails on push
+        if: github.event_name == 'push'
+        run: |
+          bad_count="$(jq '[.commits[] | select(.author.name != "liminal-loop")] | length' "$GITHUB_EVENT_PATH")"
+          if [ "$bad_count" != "0" ]; then
+            echo "Push contains commit(s) not authored by liminal-loop."
+            jq -r '.commits[] | "- " + .id + " by " + (.author.name // "unknown") + " <" + (.author.email // "unknown") + ">"' "$GITHUB_EVENT_PATH"
+            exit 1
+          fi
