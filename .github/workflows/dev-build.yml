@@ -75,3 +75,34 @@ jobs:
           path: dist/**
           if-no-files-found: error
           retention-days: 14
+
+  build-executable-armv7:
+    name: Build Executable (linux-armv7l)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build ARMv7 executable in emulated Raspberry Pi environment
+        uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          base_image: dietpi:rpi_armv7_bookworm
+          cpu: cortex-a7
+          bind_mount_repository: true
+          shell: /bin/bash
+          commands: |
+            set -euo pipefail
+            apt-get update
+            apt-get install -y python3 python3-pip python3-dev build-essential
+            python3 -m pip install --upgrade pip
+            python3 -m pip install pyinstaller requests lxml fastapi uvicorn apscheduler
+            python3 scripts/build_executable.py --clean --name epg-trim-dev
+
+      - name: Upload ARMv7 executable artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: dev-main-executable-linux-armv7l-${{ github.sha }}
+          path: dist/linux-armv7l/epg-trim-dev
+          if-no-files-found: error
+          retention-days: 14
