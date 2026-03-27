@@ -24,11 +24,22 @@ jobs:
 
       - name: Verify triggering actor
         run: |
-          if [ "${{ github.actor }}" != "liminal-loop" ]; then
-            echo "Only liminal-loop is allowed to trigger repository workflows."
-            echo "Current actor: ${{ github.actor }}"
-            exit 1
+          actor="${{ github.actor }}"
+          event_name="${{ github.event_name }}"
+
+          if [ "$actor" = "liminal-loop" ]; then
+            exit 0
           fi
+
+          if [ "$event_name" = "pull_request" ] && [ "$actor" = "dependabot[bot]" ]; then
+            echo "Allowing Dependabot pull request actor."
+            exit 0
+          fi
+
+          echo "Only liminal-loop is allowed to trigger repository workflows (except Dependabot PRs)."
+          echo "Current actor: $actor"
+          echo "Event: $event_name"
+          exit 1
 
       - name: Verify commit author emails on push
         if: github.event_name == 'push'
