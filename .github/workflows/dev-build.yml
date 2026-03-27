@@ -108,3 +108,58 @@ jobs:
           path: dist/linux-armv7l/epg-trim-dev
           if-no-files-found: error
           retention-days: 14
+
+  publish-dev-release:
+    name: Publish Dev Release Assets
+    runs-on: ubuntu-latest
+    needs:
+      - build-executables
+      - build-executable-armv7
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Linux x64 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dev-main-executable-ubuntu-latest-${{ github.sha }}
+          path: _artifacts/linux-x64
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dev-main-executable-windows-latest-${{ github.sha }}
+          path: _artifacts/windows
+
+      - name: Download Linux armv7 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: dev-main-executable-linux-armv7l-${{ github.sha }}
+          path: _artifacts/linux-armv7l
+
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+
+          cp "$(find _artifacts/linux-x64 -type f -name epg-trim-dev | head -n1)" release-assets/epg-trim-dev-linux-x86_64
+          cp "$(find _artifacts/linux-armv7l -type f -name epg-trim-dev | head -n1)" release-assets/epg-trim-dev-linux-armv7l
+          cp "$(find _artifacts/windows -type f -name epg-trim-dev.exe | head -n1)" release-assets/epg-trim-dev-windows-amd64.exe
+
+      - name: Publish dev-latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-latest
+          name: dev-latest
+          body: |
+            Latest development binaries from main.
+            These assets are updated by CI on each successful push to main.
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          files: |
+            release-assets/epg-trim-dev-linux-x86_64
+            release-assets/epg-trim-dev-linux-armv7l
+            release-assets/epg-trim-dev-windows-amd64.exe
