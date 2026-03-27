@@ -1,0 +1,78 @@
+name: Dependency License Audit
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Sync project dependencies
+        run: uv sync --frozen
+
+      - name: Install license tooling
+        run: uv pip install pip-licenses
+
+      - name: Generate dependency license report
+        run: |
+          uv run pip-licenses \
+            --with-authors \
+            --with-urls \
+            --format=json \
+            --output-file dependency-licenses.json
+
+      - name: Enforce license policy
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path("dependency-licenses.json")
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+
+          forbidden_markers = (
+              "gpl",
+              "agpl",
+              "lgpl",
+          )
+
+          violations = []
+          for dep in report:
+              license_name = (dep.get("License") or "").lower()
+              package_name = dep.get("Name") or "<unknown>"
+              if any(marker in license_name for marker in forbidden_markers):
+                  violations.append((package_name, dep.get("License", "")))
+
+          if violations:
+              print("Forbidden dependency licenses detected:")
+              for package, license_name in sorted(violations):
+                  print(f"- {package}: {license_name}")
+              raise SystemExit(1)
+
+          print("Dependency license policy check passed.")
+          PY
+
+      - name: Upload dependency license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-licenses
+          path: dependency-licenses.json
