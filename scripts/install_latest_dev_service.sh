@@ -46,8 +46,7 @@ Optional:
   --help
 
 Authentication:
-  Not required when release assets are available.
-  Optional fallback: set GITHUB_TOKEN with actions:read scope, or install/authenticate gh CLI.
+  No token is required. Downloads use public GitHub release asset URLs.
 EOF
 }
 
@@ -66,32 +65,16 @@ as_root() {
   fi
 }
 
-get_token() {
-  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    echo "${GITHUB_TOKEN}"
-    return
-  fi
-
-  if command -v gh >/dev/null 2>&1; then
-    if gh auth status >/dev/null 2>&1; then
-      gh auth token
-      return
-    fi
-  fi
-
-  return 1
-}
-
 detect_target_names() {
   local arch
   arch="$(uname -m)"
 
   case "${arch}" in
     x86_64|amd64)
-      echo "epg-trim-dev-linux-x86_64|dev-main-executable-ubuntu-latest-"
+      echo "epg-trim-dev-linux-x86_64"
       ;;
     armv7l)
-      echo "epg-trim-dev-linux-armv7l|dev-main-executable-linux-armv7l-"
+      echo "epg-trim-dev-linux-armv7l"
       ;;
     aarch64|arm64)
       echo "Unsupported architecture: ${arch}" >&2
@@ -118,51 +101,6 @@ download_release_asset() {
   fi
 
   return 1
-}
-
-api_get() {
-  local token="$1"
-  local url="$2"
-  curl -fsSL \
-    -H "Authorization: Bearer ${token}" \
-    -H "Accept: application/vnd.github+json" \
-    "${url}"
-}
-
-download_latest_artifact() {
-  local token="$1"
-  local artifact_prefix="$2"
-  local out_zip="$3"
-
-  local runs_url runs_json
-  runs_url="https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW_FILE}/runs?branch=main&status=success&per_page=30"
-  runs_json="$(api_get "${token}" "${runs_url}")"
-
-  local run_id
-  while IFS= read -r run_id; do
-    [[ -z "${run_id}" ]] && continue
-
-    local artifacts_url artifacts_json
-    artifacts_url="https://api.github.com/repos/${OWNER}/${REPO}/actions/runs/${run_id}/artifacts?per_page=100"
-    artifacts_json="$(api_get "${token}" "${artifacts_url}")"
-
-    local artifact_download_url artifact_name
-    artifact_download_url="$(echo "${artifacts_json}" | jq -r --arg prefix "${artifact_prefix}" '.artifacts[] | select(.expired == false and (.name | startswith($prefix))) | .archive_download_url' | head -n1)"
-    artifact_name="$(echo "${artifacts_json}" | jq -r --arg prefix "${artifact_prefix}" '.artifacts[] | select(.expired == false and (.name | startswith($prefix))) | .name' | head -n1)"
-
-    if [[ -n "${artifact_download_url}" && "${artifact_download_url}" != "null" ]]; then
-      echo "Found artifact ${artifact_name} in run ${run_id}"
-      curl -fsSL \
-        -H "Authorization: Bearer ${token}" \
-        -H "Accept: application/vnd.github+json" \
-        -o "${out_zip}" \
-        "${artifact_download_url}"
-      return
-    fi
-  done < <(echo "${runs_json}" | jq -r '.workflow_runs[].id')
-
-  echo "No matching artifact found for prefix: ${artifact_prefix}" >&2
-  exit 1
 }
 
 write_env_file() {
@@ -281,13 +219,10 @@ main() {
   fi
 
   require_cmd curl
-  require_cmd jq
   require_cmd systemctl
 
-  local target_names release_asset_name artifact_prefix token tmp_dir zip_path executable
-  target_names="$(detect_target_names)"
-  release_asset_name="${target_names%%|*}"
-  artifact_prefix="${target_names##*|}"
+  local release_asset_name tmp_dir zip_path executable
+  release_asset_name="$(detect_target_names)"
   tmp_dir="$(mktemp -d)"
   zip_path="${tmp_dir}/artifact.zip"
 
@@ -295,25 +230,10 @@ main() {
     echo "Downloaded release asset: ${release_asset_name}"
     executable="${zip_path}"
   else
-    echo "Public release asset not available, falling back to GitHub Actions artifact API"
-    token="$(get_token || true)"
-    if [[ -z "${token:-}" ]]; then
-      echo "No public release asset and no GitHub token available for artifact fallback." >&2
-      echo "Set GITHUB_TOKEN (actions:read) or run gh auth login." >&2
-      exit 1
-    fi
-    echo "Resolving latest dev artifact for prefix: ${artifact_prefix}"
-    download_latest_artifact "${token}" "${artifact_prefix}" "${zip_path}"
-
-    require_cmd unzip
-    unzip -q "${zip_path}" -d "${tmp_dir}/artifact"
-
-    executable="$(find "${tmp_dir}/artifact" -type f \( -name epg-trim-dev -o -name epg-trim \) | head -n1)"
-    if [[ -z "${executable}" ]]; then
-      echo "Could not find executable in downloaded artifact." >&2
-      find "${tmp_dir}/artifact" -maxdepth 4 -type f >&2 || true
-      exit 1
-    fi
+    echo "Public release asset is not available: ${release_asset_name}" >&2
+    echo "Expected URL: https://github.com/${OWNER}/${REPO}/releases/download/${RELEASE_TAG}/${release_asset_name}" >&2
+    echo "Wait for the dev release workflow to publish assets, then retry." >&2
+    exit 1
   fi
 
   echo "Installing executable from: ${executable}"

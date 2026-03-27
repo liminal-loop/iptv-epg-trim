@@ -120,6 +120,18 @@ Output:
 The generated executable is self-contained and includes required Python dependencies.
 Build each target artifact on a compatible OS/architecture; one binary is not cross-platform.
 
+## Dev Release Assets
+
+On each successful push to `main`, CI publishes latest development binaries to the public GitHub release tag `dev-latest`.
+
+Release assets:
+
+- `epg-trim-dev-linux-x86_64`
+- `epg-trim-dev-linux-armv7l`
+- `epg-trim-dev-windows-amd64.exe`
+
+These assets are publicly downloadable and do not require GitHub authentication.
+
 ## Use Executables
 
 ### Required Arguments
@@ -177,6 +189,23 @@ After startup, check:
 - `http://127.0.0.1:8000/epg.xml.gz`
 
 If using a custom port, replace `8000` accordingly.
+
+## Install As Linux Service (No Token)
+
+Use the helper script to download the latest dev binary from public release assets, create a systemd service, enable auto-start on boot, and start it now.
+
+```bash
+chmod +x scripts/install_latest_dev_service.sh
+./scripts/install_latest_dev_service.sh \
+  --playlist-url "https://example.com/playlist.m3u8" \
+  --epg-url "https://example.com/epg.xml.gz"
+```
+
+Optional overrides:
+
+- `--release-tag` to install from a different release tag (default `dev-latest`)
+- `--host` to change bind address (default `0.0.0.0`)
+- `--port` to change service port (default `8000`)
 
 ## License
 
