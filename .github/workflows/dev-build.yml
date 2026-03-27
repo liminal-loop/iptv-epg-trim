@@ -87,7 +87,7 @@ jobs:
       - name: Build ARMv7 executable in emulated Raspberry Pi environment
         uses: pguyot/arm-runner-action@v2.6.5
         with:
-          base_image: dietpi:rpi_armv7_bookworm
+          base_image: raspios_lite:latest
           cpu: cortex-a7
           bind_mount_repository: true
           shell: /bin/bash
