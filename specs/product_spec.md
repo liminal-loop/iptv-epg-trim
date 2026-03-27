@@ -57,6 +57,8 @@ The project produces two artifact types:
 1. Python package artifacts (wheel/sdist)
 2. Self-contained executable artifacts
 
+Additionally, latest development executables are published as public release assets under tag `dev-latest` for direct installation.
+
 Executable artifacts are platform-specific and include required runtime dependencies.
 
 Required build targets:
@@ -66,6 +68,12 @@ Required build targets:
 - Raspberry Pi ARM Linux executable
 
 Executable artifacts must be built on compatible target OS/architecture.
+
+Public dev release assets include:
+
+- `epg-trim-dev-linux-x86_64`
+- `epg-trim-dev-linux-armv7l`
+- `epg-trim-dev-windows-amd64.exe`
 
 ## Non Functional Requirements
 
