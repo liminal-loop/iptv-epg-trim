@@ -48,29 +48,6 @@ Install uv: https://github.com/astral-sh/uv
 uv sync
 ```
 
-## Repository Policy
-
-Contributions are welcome from any GitHub user.
-
-Maintainer preference:
-
-- When working locally in this repository, use the private maintainer identity (`liminal-loop`).
-
-Project-specific local git config:
-
-```bash
-git config --global --replace-all 'includeIf."gitdir/i:C:/Users/khg1imb/SourceCode/__home__/iptv-epg-trim/".path' 'C:/Users/khg1imb/SourceCode/__home__/iptv-epg-trim/.gitconfig.project'
-```
-
-Tracked project config file:
-
-- [.gitconfig.project](.gitconfig.project)
-
-The file contains repository-specific values for:
-
-- `user.name = liminal-loop`
-- `user.email = dev@bytemania.eu`
-
 ## Run
 
 ```bash
@@ -130,8 +107,6 @@ Release assets:
 - `epg-trim-dev-linux-armv7l`
 - `epg-trim-dev-windows-amd64.exe`
 
-These assets are publicly downloadable and do not require GitHub authentication.
-
 ## Use Executables
 
 ### Required Arguments
@@ -190,7 +165,7 @@ After startup, check:
 
 If using a custom port, replace `8000` accordingly.
 
-## Install As Linux Service (No Token)
+## Install As Linux Service
 
 Use the helper script to download the latest dev binary from public release assets, create a systemd service, enable auto-start on boot, and start it now.
 
