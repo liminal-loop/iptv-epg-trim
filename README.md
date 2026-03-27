@@ -54,7 +54,6 @@ This repository is restricted to the GitHub user liminal-loop.
 
 Enforcement layers:
 
-- GitHub workflow guard in [.github/workflows/owner-guard.yml](.github/workflows/owner-guard.yml)
 - Local commit hook in [.githooks/pre-commit](.githooks/pre-commit)
 
 Project-specific local git config:
