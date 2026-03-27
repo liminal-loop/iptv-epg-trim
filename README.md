@@ -50,11 +50,11 @@ uv sync
 
 ## Repository Policy
 
-This repository is restricted to the GitHub user liminal-loop.
+Contributions are welcome from any GitHub user.
 
-Enforcement layers:
+Maintainer preference:
 
-- Local commit hook in [.githooks/pre-commit](.githooks/pre-commit)
+- When working locally in this repository, use the private maintainer identity (`liminal-loop`).
 
 Project-specific local git config:
 
@@ -70,7 +70,6 @@ The file contains repository-specific values for:
 
 - `user.name = liminal-loop`
 - `user.email = dev@bytemania.eu`
-- `core.hooksPath = .githooks`
 
 ## Run
 
