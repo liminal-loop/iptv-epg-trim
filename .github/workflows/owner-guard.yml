@@ -44,9 +44,9 @@ jobs:
       - name: Verify commit author emails on push
         if: github.event_name == 'push'
         run: |
-          bad_count="$(jq '[.commits[] | select((.author.name != "liminal-loop") and (.author.name != "dependabot[bot]"))] | length' "$GITHUB_EVENT_PATH")"
+          bad_count="$(jq '[.commits[] | select(((.author.username // "") != "liminal-loop") and ((.author.username // "") != "dependabot[bot]") and ((.author.email // "") != "dev@bytemania.eu"))] | length' "$GITHUB_EVENT_PATH")"
           if [ "$bad_count" != "0" ]; then
             echo "Push contains commit(s) not authored by liminal-loop or dependabot[bot]."
-            jq -r '.commits[] | "- " + .id + " by " + (.author.name // "unknown") + " <" + (.author.email // "unknown") + ">"' "$GITHUB_EVENT_PATH"
+            jq -r '.commits[] | "- " + .id + " by " + (.author.name // "unknown") + " (@" + (.author.username // "unknown") + ") <" + (.author.email // "unknown") + ">"' "$GITHUB_EVENT_PATH"
             exit 1
           fi
