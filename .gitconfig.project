@@ -1,6 +1,7 @@
 [user]
 	name = liminal-loop
 	email = dev@bytemania.eu
+	useConfigOnly = true
 
 [core]
 	hooksPath = .githooks
